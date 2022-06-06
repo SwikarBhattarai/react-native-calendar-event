@@ -21,12 +21,23 @@ export default class App extends React.Component {
         { start: '2017-09-08 11:30:00', end: '2017-09-08 12:30:00', title: 'Dr. Mariana Joseph', summary: '3412 Piedmont Rd NE, GA 3032' },
         { start: '2017-09-09 01:30:00', end: '2017-09-09 02:00:00', title: 'Dr. Mariana Joseph', summary: '3412 Piedmont Rd NE, GA 3032' },
         { start: '2017-09-09 03:10:00', end: '2017-09-09 03:40:00', title: 'Dr. Mariana Joseph', summary: '3412 Piedmont Rd NE, GA 3032' },
-        { start: '2017-09-09 00:10:00', end: '2017-09-09 01:45:00', title: 'Dr. Mariana Joseph', summary: '3412 Piedmont Rd NE, GA 3032' }
+        { start: '2017-09-09 00:10:00', end: '2017-09-09 01:45:00', title: 'Dr. Mariana Joseph', summary: '3412 Piedmont Rd NE, GA 3032' },
+        { start: '2017-09-07 04:15:00', end: '2017-09-07 05:20:00', title: 'Dr. Mariana Joseph', summary: '3412 Piedmont Rd NE, GA 3032' },
+        { start: '2017-09-07 07:15:00', end: '2017-09-07 07:45:00', title: 'Dr. Mariana Joseph', summary: '3412 Piedmont Rd NE, GA 3032' },
+        
       ],
       breaks: [
         {
           start: '2017-09-07 03:00:00',
           end: '2017-09-07 05:00:00',
+        },
+        {
+          start: '2017-09-07 04:00:00',
+          end: '2017-09-07 05:00:00',
+        },
+        {
+          start: '2017-09-07 06:00:00',
+          end: '2017-09-07 09:00:00',
         },
       ],
     };

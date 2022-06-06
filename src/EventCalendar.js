@@ -112,7 +112,6 @@ export default class EventCalendar extends React.Component {
             {rightIcon}
           </TouchableOpacity>
         </View>
-        {console.log('item', item)}
         <DayView
           date={date}
           index={index}

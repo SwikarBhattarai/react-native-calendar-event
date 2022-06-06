@@ -25,7 +25,10 @@ export default class DayView extends React.PureComponent {
     super(props);
     this.calendarHeight = (props.end - props.start) * 100;
     const width = props.width - LEFT_MARGIN;
-    const packedEvents = populateEvents(props.events, width, props.start);
+
+    const onlyEvents = (props.events || []).filter((e) => !e.isBreak)
+    const breaks = (props.events || []).filter((e) => e.isBreak)
+    const packedEvents = populateEvents(onlyEvents, width, props.start);
     let initPosition =
       _.min(_.map(packedEvents, 'top')) -
       this.calendarHeight / (props.end - props.start);
@@ -33,13 +36,15 @@ export default class DayView extends React.PureComponent {
     this.state = {
       _scrollY: initPosition,
       packedEvents,
+      breaks,
     };
   }
 
   componentWillReceiveProps(nextProps) {
     const width = nextProps.width - LEFT_MARGIN;
+    const onlyEvents = (nextProps.events || []).filter((e) => !e.isBreak)
     this.setState({
-      packedEvents: populateEvents(nextProps.events, width, nextProps.start),
+      packedEvents: populateEvents(onlyEvents, width, nextProps.start),
     });
   }
 
@@ -103,12 +108,7 @@ export default class DayView extends React.PureComponent {
       }
       const { width, styles } = this.props;
 
-
-      let result = (this.props.events || []).find(e => (e.isBreak && i == moment(e.start).format('H')) || (e.isBreak && i == moment(e.end).format('H')))
-      const filteredBreaks = this.props.events.filter((e) => e.isBreak);
-
-      const isBetweenBreaks = filteredBreaks.filter((o) => (i >= moment(o.start).format('H')) && (i <= moment(o.end).format('H')));
-
+      let result = (this.props.events || []).find(e => (e.isBreak && i >= moment(e.start).format('H')) && (e.isBreak && i < (moment(e.end).format('H'))))
 
       return [
         <Text
@@ -121,7 +121,7 @@ export default class DayView extends React.PureComponent {
           <>
             <View
               key={`line${i}`}
-              style={[styles.line,  ((isBetweenBreaks && isBetweenBreaks.length !== 0) || result) && { height: 0 }, { top: offset * index, width: width - 20 }]}
+              style={[styles.line, result && { height: 100, backgroundColor: '#CCC' }, { top: offset * index, width: width - 20 }]}
             />
           </>
 
@@ -130,7 +130,7 @@ export default class DayView extends React.PureComponent {
           key={`lineHalf${i}`}
           style={[
             styles.line,
-             ((isBetweenBreaks && isBetweenBreaks.length !== 0) || result) && { height: 0 },
+            result && { height: 0 },
             { top: offset * (index + 0.5), width: width - 20 },
           ]}
         />,
@@ -154,18 +154,13 @@ export default class DayView extends React.PureComponent {
 
   _renderEvents() {
     const { styles } = this.props;
-    const { packedEvents } = this.state;
+    const { packedEvents, breaks } = this.state;
     let events = packedEvents.map((event, i) => {
+
       const style = {
+        height: event.height,
         left: event.left,
-        height: event.height,
-        width: event.isBreak ? '100%' : event.width,
-        top: event.top,
-      };
-      const breaksStyle = {
-        height: event.height,
-        left: 0,
-        right: RIGHT_MARGIN,
+        width: event.width,
         top: event.top,
       };
 
@@ -180,47 +175,38 @@ export default class DayView extends React.PureComponent {
       const numberOfLines = Math.floor(event.height / TEXT_LINE_HEIGHT);
       const formatTime = this.props.format24h ? 'HH:mm' : 'hh:mm A';
 
-      const filteredBreaks = this.props.events.filter((e) => e.isBreak);
-
-      const isBetweenBreaks = filteredBreaks.filter((o) => (moment(event.start).format('H') >= moment(o.start).format('H')) && (moment(event.end).format('H') <= moment(o.end).format('H')));
-
-
       return (
         <TouchableOpacity
           activeOpacity={0.5}
           onPress={() =>
             this._onEventTapped(this.props.events[event.index])
           }
-          key={i} style={[isBetweenBreaks && isBetweenBreaks.length !==0  && !event.isBreak ? { ...styles.stretchedEvent, ...breaksStyle } : { ...styles.event, ...style }, event.isBreak ? { backgroundColor: '#ABB0B8', marginLeft: BREAK_LEFT_MARGIN } : { backgroundColor: event.color && eventColor || '#F0F4FF', marginLeft: LEFT_MARGIN }]}
+          key={i}
+          style={[styles.event, style, event.color && eventColor]}
         >
           {this.props.renderEvent ? (
             this.props.renderEvent(event)
           ) : (
             <View>
-              {!event.isBreak && (
-                <>
-                  <Text numberOfLines={1} style={styles.eventTitle}>
-                    {event.title || 'Event'}
-                  </Text>
 
-                  {numberOfLines > 1 ? (
-                    <Text
-                      numberOfLines={numberOfLines - 1}
-                      style={[styles.eventSummary]}
-                    >
-                      {event.summary || ' '}
-                    </Text>
-                  ) : null}
-                  {numberOfLines > 2 ? (
-                    <Text style={styles.eventTimes} numberOfLines={1}>
-                      {moment(event.start).format(formatTime)} -{' '}
-                      {moment(event.end).format(formatTime)}
-                    </Text>
-                  ) : null}
+              <Text numberOfLines={1} style={styles.eventTitle}>
+                {event.title || 'Event'}
+              </Text>
 
-                </>
-              )}
-
+              {numberOfLines > 1 ? (
+                <Text
+                  numberOfLines={numberOfLines - 1}
+                  style={[styles.eventSummary]}
+                >
+                  {event.summary || ' '}
+                </Text>
+              ) : null}
+              {numberOfLines > 2 ? (
+                <Text style={styles.eventTimes} numberOfLines={1}>
+                  {moment(event.start).format(formatTime)} -{' '}
+                  {moment(event.end).format(formatTime)}
+                </Text>
+              ) : null}
 
             </View>
           )}
@@ -230,10 +216,52 @@ export default class DayView extends React.PureComponent {
 
     return (
       <View>
-        {events}
+        <View style={{ marginLeft: LEFT_MARGIN }}>{events}</View>
       </View >
     );
   }
+
+  _renderBreaks() {
+    const { styles } = this.props;
+    const { breaks } = this.state;
+    let events = breaks.map((event, i) => {
+
+      const style = {
+        height: event.height,
+        left: 0,
+        width: '100%',
+        top: event.top,
+      };
+
+
+      // Fixing the number of lines for the event title makes this calculation easier.
+      // However it would make sense to overflow the title to a new line if needed
+      const numberOfLines = Math.floor(event.height / TEXT_LINE_HEIGHT);
+      const formatTime = this.props.format24h ? 'HH:mm' : 'hh:mm A';
+
+      return (
+        <TouchableOpacity
+          activeOpacity={0.5}
+          onPress={() =>
+            this._onEventTapped(this.props.events[event.index])
+          }
+          key={i}
+          style={[styles.event, style]}
+
+        />
+
+      );
+    });
+
+    return (
+      <View>
+        <View style={{ marginLeft: LEFT_MARGIN }}>{events}</View>
+      </View >
+    );
+  }
+
+
+
 
   render() {
     const { styles } = this.props;
@@ -247,6 +275,7 @@ export default class DayView extends React.PureComponent {
       >
         {this._renderLines()}
         {this._renderEvents()}
+        {this._renderBreaks()}
         {this._renderRedLine()}
       </ScrollView>
     );
